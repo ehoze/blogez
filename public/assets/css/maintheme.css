@@ -1,0 +1,372 @@
+/* General styles */
+body {
+    color: #2d3436;
+    background-color: #f8f9fa;
+}
+
+/* Typography */
+.main-title {
+    color: #2d3436;
+    font-weight: 700;
+    margin-bottom: 2rem;
+}
+
+.section-title {
+    color: #2d3436;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+}
+
+/* Cards */
+.blog-card {
+    background: linear-gradient(145deg, #ffffff, #f5f7fa);
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.blog-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+}
+
+.auth-card {
+    background: linear-gradient(145deg, #ffffff, #f5f7fa);
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease;
+    text-align: center;
+}
+
+.auth-card:hover {
+    transform: translateY(-5px);
+}
+
+.stats-card {
+    background: linear-gradient(145deg, #ffffff, #f5f7fa);
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-5px);
+}
+
+/* Post styles */
+.post-date {
+    color: #6c757d;
+    font-size: 0.9rem;
+    display: block;
+}
+
+.card-title {
+    color: #2d3436;
+    font-weight: 600;
+}
+
+.card-text {
+    color: #636e72;
+    line-height: 1.6;
+}
+
+.read-more {
+    color: #0984e3;
+    text-decoration: none;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: color 0.3s ease;
+}
+
+.read-more:hover {
+    color: #00b894;
+}
+
+/* Article styles */
+.article-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    padding: 3rem;
+}
+
+.article-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #eee;
+}
+
+.article-title {
+    color: #2d3436;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.article-content {
+    color: #2d3436;
+    line-height: 1.8;
+    font-size: 1.1rem;
+}
+
+.article-content p {
+    margin-bottom: 1.5rem;
+}
+
+/* Buttons */
+.btn-gradient {
+    background: linear-gradient(45deg, #0984e3, #00b894);
+    border: none;
+    color: white;
+    padding: 10px 25px;
+    border-radius: 25px;
+    transition: all 0.3s ease;
+}
+
+.btn-gradient:hover {
+    background: linear-gradient(45deg, #00b894, #0984e3);
+    transform: translateY(-2px);
+    color: white;
+}
+
+.btn-outline-gradient {
+    background: transparent;
+    border: 2px solid #0984e3;
+    color: #0984e3;
+    padding: 8px 20px;
+    border-radius: 25px;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-gradient:hover {
+    background: linear-gradient(45deg, #0984e3, #00b894);
+    border-color: transparent;
+    color: white;
+}
+
+/* Dashboard elements */
+.stats-icon {
+    color: #0984e3;
+}
+
+.stats-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2d3436;
+}
+
+.stats-text {
+    color: #6c757d;
+    margin: 0;
+}
+
+/* Alerts */
+.alert {
+    border-radius: 15px;
+    border: none;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .article-container {
+        padding: 1.5rem;
+    }
+    
+    .article-title {
+        font-size: 2rem;
+    }
+    
+    .card-body {
+        padding: 1.25rem;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.dashboard-title {
+    color: #2d3436;
+    font-weight: 700;
+    margin-bottom: 2rem;
+}
+
+.stats-card {
+    background: linear-gradient(145deg, #ffffff, #f5f7fa);
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-5px);
+}
+
+.stats-icon {
+    color: #0984e3;
+}
+
+.stats-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2d3436;
+}
+
+.stats-text {
+    color: #6c757d;
+    margin: 0;
+}
+
+.post-card {
+    background: linear-gradient(145deg, #ffffff, #f5f7fa);
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease;
+}
+
+.post-card:hover {
+    transform: translateY(-5px);
+}
+
+.post-title {
+    color: #2d3436;
+    font-weight: 600;
+}
+
+.btn-gradient {
+    background: linear-gradient(45deg, #0984e3, #00b894);
+    border: none;
+    color: white;
+    padding: 10px 25px;
+    border-radius: 25px;
+    transition: all 0.3s ease;
+}
+
+.btn-gradient:hover {
+    background: linear-gradient(45deg, #00b894, #0984e3);
+    transform: translateY(-2px);
+    color: white;
+}
+
+.btn-outline-gradient {
+    background: transparent;
+    border: 2px solid #0984e3;
+    color: #0984e3;
+    padding: 8px 20px;
+    border-radius: 25px;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-gradient:hover {
+    background: linear-gradient(45deg, #0984e3, #00b894);
+    border-color: transparent;
+    color: white;
+}
+
+.alert {
+    border-radius: 15px;
+    border: none;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+
+
+
+
+
+
+
+
+
+
+
+.main-title {
+    color: #2d3436;
+    font-weight: 700;
+    margin-bottom: 2rem;
+}
+
+.auth-card {
+    background: linear-gradient(145deg, #ffffff, #f5f7fa);
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease;
+    text-align: center;
+}
+
+.auth-card:hover {
+    transform: translateY(-5px);
+}
+
+.btn-gradient {
+    background: linear-gradient(45deg, #0984e3, #00b894);
+    border: none;
+    color: white;
+    padding: 10px 25px;
+    border-radius: 25px;
+    transition: all 0.3s ease;
+}
+
+.btn-gradient:hover {
+    background: linear-gradient(45deg, #00b894, #0984e3);
+    transform: translateY(-2px);
+    color: white;
+}
+
+.blog-card {
+    background: linear-gradient(145deg, #ffffff, #f5f7fa);
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+}
+
+.card-footer {
+    background: transparent;
+    border-top: 1px solid #eee;
+    padding-top: 1rem;
+}
+
+.author {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.read-more {
+    color: #0984e3;
+    text-decoration: none;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: color 0.3s ease;
+}
+
+.read-more:hover {
+    color: #00b894;
+}
