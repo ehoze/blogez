@@ -5,7 +5,7 @@ require_once("./src/controllers/posts/PostController.php");
 require_once("./src/controllers/posts/PostUtilities.php");
 
 $Post = new PostsController();
-$posts = $Post->getPosts(4); 
+$posts = $Post->getPosts(4);
 $PostUtil = new PostUtilities();
 
 ?>
@@ -48,11 +48,14 @@ $PostUtil = new PostUtilities();
                 <div class="blog-card h-100">
                     <div class="card-body d-flex flex-column p-4">
                         <div class="flex-grow-1">
-                            <h3 class="card-title mb-3">' . $post['title'] . '</h3>
+                            <p class="h3 card-title mb-3"><a class="text-decoration-none text-dark" href="/blogez2/wpis/' . $post['id'] . '">' . $post['title'] . '</a></p>
                             <p class="card-text">' . $PostUtil->PostUExcerpt($post['id']) . '</p>
                         </div>
                         <div class="card-footer">
-                            <div class="author mb-2">' . $Post->getPostAuthor($post['id']) . '</div>
+                            <div class="author mb-2">
+                                <p class="mb-0">Autor: ' . $Post->getPostAuthor($post['id']) . '</p>
+                                <p>Data publikacji: ' . date('d M Y', strtotime($post['created_at'])) . '</p>
+                            </div>
                             <a href="/blogez2/wpis/' . $post['id'] . '" class="read-more">
                                 Czytaj dalej 
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-right" viewBox="0 0 16 16">
@@ -69,7 +72,7 @@ $PostUtil = new PostUtilities();
 </section>
 
 <style>
-/* .main-title {
+    /* .main-title {
     color: #2d3436;
     font-weight: 700;
     margin-bottom: 2rem;

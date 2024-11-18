@@ -18,13 +18,13 @@ class Register
 
         if (empty($name) || empty($password)) {
             $_SESSION['register_message'] = 'Nie uzupełniono wszystkich wymaganych danych: login - hasło.';
-            header('Location:http://localhost/blogez/konto/register', true, 301);
+            header('Location:http://localhost/blogez2/konto/register', true, 301);
             return false;
         }
 
         if (!$accept) {
             $_SESSION['register_message'] = 'Nie zaakceptowano regulaminu.';
-            header('Location:http://localhost/blogez/konto/register', true, 301);
+            header('Location:http://localhost/blogez2/konto/register', true, 301);
             return false;
         }
 

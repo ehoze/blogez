@@ -1,10 +1,10 @@
 <?php
-@include_once 'config/db.php';
-@include_once '../../config/db.php';
+include_once __DIR__ . '/../../../config/db.php';
 
 class AccountPosts
 {
     private $db;
+    private const REDIRECT_PATH = '/blogez2/konto/';
 
     public function __construct()
     {
@@ -44,46 +44,98 @@ class AccountPosts
         }
     }
 
+    
     // Tworzenie nowego wpisu
-    public function addPost($params)
+    public function addPost(array $params): bool
     {
-        $connection = $this->db->getConnection();
-
-        if (empty($params['title']) || empty($params['content'])) {
-            echo "Tytuł i treść są wymagane!";
-            return false;
-        }
-
-        $sql = "INSERT INTO posts (user_id, title, content, seo_title, seo_desc, slug) VALUES (:user_id, :title, :content, :seo_title, :seo_desc, :slug)";
-
-        // Generowanie "slug" z tytułu
-        $slug = $this->generateSlug($params['title']);
-
-        // Przygotowanie zapytania
-        $stmt = $connection->prepare($sql);
-
         try {
-            $stmt->execute([
-                ':user_id' => $_SESSION['user_id'],
-                ':title' => $params['title'],
-                ':content' => $params['content'], 
-                ':seo_title' => $params['seo_title'] ?? null,
-                ':seo_desc' => $params['seo_desc'] ?? null,
-                ':slug' => $slug
+            // Walidacja w osobnej metodzie
+            if (!$this->validatePostData($params)) {
+                return false;
+            }
+
+            $connection = $this->db->getConnection();
+            $connection->beginTransaction();
+
+            $slug = $this->generateSlug($params['title']);
+            $userId = $this->getUserId();
+
+            // Dodanie posta
+            $postAdded = $this->insertPost($connection, [
+                'user_id' => $userId,
+                'title' => $params['title'],
+                'content' => $params['content'],
+                'seo_title' => $params['seo_title'] ?? null,
+                'seo_desc' => $params['seo_desc'] ?? null,
+                'slug' => $slug
             ]);
-            echo "Wpis został dodany pomyślnie!";
 
-            $postsLeft = --$_SESSION['posts_left'];
-            $sql = "UPDATE users SET max_posts = :postsLeft WHERE id = :user_id";
-            $stmt = $connection->prepare($sql);
-            $stmt->execute([':postsLeft' => $postsLeft, ':user_id' => $_SESSION['user_id']]);
+            if ($postAdded) {
+                // Aktualizacja licznika postów
+                $this->updateUserPostsCount($connection, $userId);
+                $connection->commit();
+                $this->setSuccessMessage("Post został dodany pomyślnie!");
+                $this->redirect(self::REDIRECT_PATH);
+                return true;
+            }
 
-            header('Location:http://localhost/blogez2/konto/', true, 301);
-            return true;
-        } catch (PDOException $e) {
-            echo "Błąd podczas dodawania wpisu: " . $e->getMessage();
+            throw new Exception("Nie udało się dodać posta");
+
+        } catch (Exception $e) {
+            $connection->rollBack();
+            $this->setErrorMessage("Błąd podczas dodawania wpisu: " . $e->getMessage());
             return false;
         }
+    }
+
+    private function validatePostData(array $params): bool
+    {
+        if (empty($params['title']) || empty($params['content'])) {
+            $this->setErrorMessage("Tytuł i treść są wymagane!");
+            $this->redirect(self::REDIRECT_PATH . 'post/');
+            return false;
+        }
+        return true;
+    }
+
+    private function insertPost(PDO $connection, array $data): bool
+    {
+        $sql = "INSERT INTO posts (user_id, title, content, seo_title, seo_desc, slug, created_at) 
+                VALUES (:user_id, :title, :content, :seo_title, :seo_desc, :slug, NOW())";
+        
+        $stmt = $connection->prepare($sql);
+        return $stmt->execute($data);
+    }
+
+    private function updateUserPostsCount(PDO $connection, int $userId): void
+    {
+        $postsLeft = --$_SESSION['posts_left'];
+        $sql = "UPDATE users SET max_posts = :postsLeft WHERE id = :user_id";
+        $stmt = $connection->prepare($sql);
+        $stmt->execute([':postsLeft' => $postsLeft, ':user_id' => $userId]);
+    }
+
+    private function setSuccessMessage(string $message): void
+    {
+        $_SESSION['edit_message'] = $message;
+        $_SESSION['edit_message_color'] = "success";
+    }
+
+    private function setErrorMessage(string $message): void
+    {
+        $_SESSION['edit_message'] = $message;
+        $_SESSION['edit_message_color'] = "danger";
+    }
+
+    private function getUserId(): int
+    {
+        return $_SESSION['user_id'] ?? throw new Exception("Użytkownik nie jest zalogowany");
+    }
+
+    private function redirect(string $path): void
+    {
+        header('Location: http://localhost' . $path, true, 301);
+        exit;
     }
 
     // Edytowanie wpisu
@@ -91,16 +143,16 @@ class AccountPosts
     {
         $connection = $this->db->getConnection();
 
-        $sql = "UPDATE posts SET title = :title, content = :content, seo_title = :seo_title, seo_desc = :seo_desc WHERE id = :id";
+        $sql = "UPDATE posts SET title = ?, content = ?, seo_title = ?, seo_desc = ? WHERE id = ?";
         $stmt = $connection->prepare($sql);
 
         try {
             $stmt->execute([
-                ':id' => $id,
-                ':title' => $params['title'],
-                ':content' => $params['content'], 
-                ':seo_title' => $params['seo_title'],
-                ':seo_desc' => $params['seo_desc']
+                $params['title'],
+                $params['content'], 
+                $params['seo_title'],
+                $params['seo_desc'],
+                $id,
             ]);
             $_SESSION['edit_message'] = "Wpis został edytowany pomyślnie!";
             $_SESSION['edit_message_color'] = "success";
@@ -115,6 +167,36 @@ class AccountPosts
         }
 
     }
+
+    public function deletePost($postId, $userId) {
+        try {
+            $stmt = $this->db->getConnection()->prepare("SELECT id from posts WHERE id = ? AND user_id = ?");
+            $stmt->execute([$postId, $userId]);
+
+            // Sprawdzenie czy wpis istnieje i czy należy do użytkownika
+            if ($stmt->rowCount() === 0){
+                $_SESSION['edit_message'] = "Nie masz uprawnień do usuwania tego wpisu!";
+                $_SESSION['edit_message_color'] = "danger";
+                throw new Exception("Nie masz uprawnień do usuwania tego wpisu!");
+            }
+            
+            // Usuwanie wpisu
+            $stmt = $this->db->getConnection()->prepare("DELETE FROM posts WHERE id = ?");
+            $stmt->execute([$postId]);
+
+            $stmt = $this->db->getConnection()->prepare("UPDATE users SET max_posts = ? WHERE id = ?");
+            $postsLeft = ++$_SESSION['posts_left'];
+            $stmt->execute([$postsLeft, $userId]);
+            header('Location:http://localhost/blogez2/konto/', true, 301);
+            return true;
+        } catch (Exception $e) {
+            $_SESSION['edit_message'] = $e->getMessage();
+            $_SESSION['edit_message_color'] = "danger";
+            return false;
+        }
+    }
+
+
 
     // Metoda do generowania przyjaznego "slug" z tytułu
     private function generateSlug($title)
@@ -133,5 +215,5 @@ class AccountPosts
         
         return $slug;
     }
-    
+
 }

@@ -2,34 +2,33 @@
 global $SES;
 (!$SES->IsLogged()) ? header('Location:/blogez2/konto/', true, 301) : '';
 require_once('./src/controllers/posts/PostController.php');
+require_once('./src/controllers/posts/AccountPosts.php');
+$accountPosts = new AccountPosts();
 
-// Przetwarzanie formularza - dodajemy na początku
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    require_once './src/controllers/posts/AccountPosts.php';
-    $accountPosts = new AccountPosts();
-
-    $params = [
-        'user_id' => $SES->GetUserId(),
-        'title' => $_POST['title'],
-        'content' => $_POST['editor_content'], // Nowe pole z zawartością edytora
-        'seo_title' => $_POST['seo_title'],
-        'seo_desc' => $_POST['seo_desc']
-    ];
-
-    $accountPosts->editPost($params, $id);
-    header('Location: /blogez2/konto/post/edit/'.$id); // Przekierowanie po zapisie
-    exit();
+// Obsługa usuwania posta
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete') {
+    $accountPosts->deletePost($id, $SES->GetUserId());
 }
 
+// Obsługa edycji posta
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action'])) {
+    $accountPosts->editPost([
+        'user_id' => $SES->GetUserId(),
+        'title' => $_POST['title'],
+        'content' => $_POST['editor_content'],
+        'seo_title' => $_POST['seo_title'],
+        'seo_desc' => $_POST['seo_desc']
+    ], $id);
 
+    header('Location: /blogez2/konto/post/edit/' . $id);
+    exit();
+}
 
 $post = new PostsController();
 $post = $post->getPost($id);
 ?>
 
-<!-- <script src="https://cdn.ckeditor.com/ckeditor5/39.0.0/classic/ckeditor.js"></script> -->
 <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet" />
-
 
 <div class="container py-5">
     <?php if (isset($_SESSION['edit_message'])) {
@@ -42,8 +41,7 @@ $post = $post->getPost($id);
                 <div class="card-body p-4">
                     <h1 class="card-title mb-4 fw-bold text-primary">Edycja wpisu: <?= $post['title'] ?></h1>
 
-                    <form action="/blogez2/konto/post/edit/<?= $post['id'] ?>" method="POST">
-                        <!-- <form action="/blogez/class/posts/EditPost.php" method="POST"> -->
+                    <form id="editForm" action="/blogez2/konto/post/edit/<?= $post['id'] ?>" method="POST">
                         <div class="mb-4">
                             <label class="form-label fw-medium" for="title">Nazwa wpisu</label>
                             <div class="input-group">
@@ -69,13 +67,20 @@ $post = $post->getPost($id);
                             <textarea class="form-control" name="seo_desc" id="seo_desc" rows="3"><?= $post['seo_desc'] ?></textarea>
                         </div>
 
-                        <!-- Dodajemy ukryte pole na zawartość edytora -->
                         <input type="hidden" name="editor_content" id="editor_content">
 
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <a href="/blogez2/konto/" class="btn btn-light btn-lg px-4">Anuluj</a>
-                            <button type="submit" class="btn btn-primary btn-lg px-4" onclick="setEditorContent()">Zapisz zmiany</button>
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-danger btn-lg px-4" onclick="confirmAndDelete()">Usuń wpis</button>
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="/blogez2/konto/" class="btn btn-light btn-lg px-4">Anuluj</a>
+                                <button type="submit" class="btn btn-primary btn-lg px-4" onclick="setEditorContent()">Zapisz zmiany</button>
+                            </div>
                         </div>
+                    </form>
+
+                    <!-- Oddzielny formularz do usuwania, ukryty -->
+                    <form id="deleteForm" action="/blogez2/konto/post/edit/<?= $post['id'] ?>" method="POST" style="display: none;">
+                        <input type="hidden" name="action" value="delete">
                     </form>
                 </div>
             </div>
@@ -83,9 +88,7 @@ $post = $post->getPost($id);
     </div>
 </div>
 
-<!-- Dodaj Font Awesome dla ikon -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
 <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
 
 <script>
@@ -93,11 +96,14 @@ $post = $post->getPost($id);
         theme: 'snow'
     });
 
-    // Dodajemy funkcję do przekazania zawartości edytora do formularza
     function setEditorContent() {
         const editorContent = document.querySelector('#editor_content');
         editorContent.value = quill.root.innerHTML;
     }
-</script>
 
-</div>
+    function confirmAndDelete() {
+        if (confirm('Czy na pewno chcesz usunąć ten wpis?')) {
+            document.getElementById('deleteForm').submit();
+        }
+    }
+</script>

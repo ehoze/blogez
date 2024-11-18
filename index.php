@@ -67,7 +67,7 @@ $router->addRoute('blogez2/konto/logout', 'AccountController@logout');
 // Account + Posts - dodawanie wpisów
 $router->addRoute('blogez2/konto/post', 'AccountController@postcreate');
 $router->addRoute('blogez2/konto/post/edit/{id}', 'AccountController@postedit');
-
+$router->addRoute('blogez2/konto/post/delete/{id}', 'AccountController@deletepost');
 // Wpisy - dynamiczne trasy dla pojedynczego wpisu
 $router->addRoute('blogez2/wpisy', 'PostController@index');
 $router->addRoute('blogez2/wpis/{id}', 'PostController@single');

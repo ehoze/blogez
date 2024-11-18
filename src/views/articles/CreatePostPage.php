@@ -5,16 +5,35 @@ if ($SES->GetUserPostsLeft() == 0) {
     $_SESSION['info_message'] = 'Nie masz już więcej wpisów do dodania.';
     header('Location:/blogez2/konto/', true, 301);
 }
+
+
+// Obsługa edycji posta
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action'])) {
+    $accountPosts->addPost([
+        'user_id' => $SES->GetUserId(),
+        'title' => $_POST['title'],
+        'content' => $_POST['editor_content'],
+        'seo_title' => $_POST['seo_title'],
+        'seo_desc' => $_POST['seo_desc']
+    ]);
+
+    header('Location: /blogez2/konto/' . $id);
+    exit();
+}
+
 ?>
 
 <script src="https://cdn.ckeditor.com/ckeditor5/39.0.0/classic/ckeditor.js"></script>
 
 
-<div class="container">
-
+<div class="container py-5">
+    <?php if (isset($_SESSION['edit_message'])) {
+        echo '<div class="alert alert-' . $_SESSION['edit_message_color'] . ' fade show" role="alert">' . $_SESSION['edit_message'] . '</div>';
+        unset($_SESSION['edit_message']);
+    } ?>
     <h1>Dodaj nowy wpis</h1>
 
-    <form action="/blogez2/class/posts/CreatePost.php" method="POST">
+    <form action="/blogez2/src/controllers/posts/CreatePost.php" method="POST">
         <div class="mb-3 col-auto">
             <label class="visually-hidden" for="name">Nazwa wpisu (h1)</label>
             <div class="input-group">
@@ -50,7 +69,7 @@ if ($SES->GetUserPostsLeft() == 0) {
     </script>
 
 
-    <!-- <form action="/blogez/class/posts/CreatePost.php" method="POST">
+    <!-- <form action="/blogez2/class/posts/CreatePost.php" method="POST">
         <label for="title">Tytuł:</label>
         <input type="text" name="title" id="title" required><br><br>
 

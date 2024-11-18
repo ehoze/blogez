@@ -29,6 +29,10 @@ class AccountController {
         require_once("./src/views/articles/EditPostPage.php"); // ZROBIĆ PRZEKIEROWANIE JEŚLI NIEZALOGOWANY
     }
 
+    public function deletepost($id) {
+        require_once './src/controllers/posts/DeletePost.php';
+    }
+
 
 }
 ?>
