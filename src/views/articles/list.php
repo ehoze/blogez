@@ -1,42 +1,47 @@
 <?php
-require_once("./src/controllers/posts/PostController.php");
-require_once("./src/controllers/posts/PostUtilities.php");
+// Kontroler i serwisy powinny być przekazane z routera
+/** @var PostController $postController */
+/** @var PostService $postService */
 
-$Post = new PostsController();
-$posts = $Post->getPosts(); // Przypisanie danych posta do zmiennej $post
-
-$PostUtil = new PostUtilities();
-// $excerpt = $PostUtil->PostUExcerpt($posts['id']); // Uzyskanie skrótu posta
+$posts = $postController->getPosts();
+$postService = new PostService($postController);
 ?>
+
 <div class="container py-5">
+    <h1 class="text-center mb-4">Wszystkie wpisy</h1>
     <div class="row row-cols-1 row-cols-md-2 g-4">
-        <?php
-        foreach ($posts as $post) {
-            echo '
+        <?php foreach ($posts as $post): 
+            $metadata = $postService->getPostMetadata($post['id']);
+        ?>
             <div class="col">
                 <div class="blog-card h-100">
                     <div class="card-body d-flex flex-column p-4">
-                        <div class="flex-grow-1">
-                            <p class="h3 card-title mb-3"><a class="text-decoration-none text-dark" href="/blogez2/wpis/' . $post['id'] . '">' . $post['title'] . '</a></p>
-                            <p class="card-text">' . $PostUtil->PostUExcerpt($post['id']) . '</p>
-                        </div>
-                        <div class="card-footer">
-                            <div class="author mb-2">
-                                <p class="mb-0">Autor: ' . $Post->getPostAuthor($post['id']) . '</p>
-                                <p>Data publikacji: ' . date('d M Y', strtotime($post['created_at'])) . '</p>
-                            </div>
-                            <a href="/blogez2/wpis/' . $post['id'] . '" class="read-more">
-                                Czytaj dalej 
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-right" viewBox="0 0 16 16">
-                                    <path d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/>
-                                </svg>
+                        <h2 class="h4 card-title mb-3" style="min-height: 48px;">
+                            <a class="text-decoration-none text-dark" 
+                               href="/blogez2/wpis/<?= $post['id'] ?>">
+                                <?= htmlspecialchars($post['title']) ?>
                             </a>
+                        </h2>
+                        <div class="d-flex flex-column" style="flex: 1;">
+                            <p class="card-text mb-4" style="height: 96px; overflow: hidden;">
+                                <?= $metadata['excerpt'] ?>
+                            </p>
+                            <div class="mt-auto">
+                                <a class="btn btn-gradient w-100 mb-3" href="/blogez2/wpis/<?= $post['id'] ?>">
+                                    Czytaj dalej
+                                </a>
+                                <div class="card-footer bg-transparent border-top pt-3">
+                                    <div class="author">
+                                        <p class="mb-1">Autor: <?= htmlspecialchars($metadata['author']) ?></p>
+                                        <p class="mb-0">Data publikacji: <?= $metadata['date'] ?></p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>';
-        }
-        ?>
+            </div>
+        <?php endforeach; ?>
     </div>
 </div>
 

@@ -2,6 +2,14 @@
 global $SES;
 (!$SES->IsLogged()) ? header('Location:/blogez2/konto/login/', true, 301) : '';
 
+require_once('./src/controllers/account/DeleteAccount.php');
+// Obsługa usuwania konta
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'deleteAccount' && isset($_POST['confirmation_id'])) {
+    $deleteAccount = new DeleteAccount();
+    $deleteAccount->index();
+    header('Location: /blogez2/konto/');
+    exit();
+}
 
 require_once('./src/controllers/posts/AccountPosts.php');
 
@@ -56,7 +64,7 @@ $posts = $accountPosts->getPosts();
     <div class="posts-section">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 class="section-title">Twoje wpisy</h2>
-            <a href="/blogez2/konto/post/" class="btn btn-gradient">Dodaj nowy wpis</a>
+            <a href="/blogez2/konto/post/create" class="btn btn-gradient">Dodaj nowy wpis</a>
         </div>
 
         <?php if ($posts) { ?>
@@ -83,11 +91,49 @@ $posts = $accountPosts->getPosts();
         <?php } else { ?>
             <div class="empty-state text-center py-5">
                 <p class="text-muted mb-4">Brak postów do wyświetlenia. Dobrze byłoby od czegoś zacząć:</p>
-                <a href="/blogez2/konto/post/" class="btn btn-gradient">Stwórz swój pierwszy wpis</a>
+                <a href="/blogez2/konto/post/create" class="btn btn-gradient">Stwórz swój pierwszy wpis</a>
             </div>
         <?php } ?>
     </div>
 </section>
+
+<section class="container py-5">
+    <h2 class="section-title">Usuń konto</h2>
+    <form id="deleteAccountForm" action="/blogez2/konto/" method="POST">
+        <input type="hidden" name="action" value="deleteAccount">
+        <button type="button" class="btn btn-danger" onclick="confirmAndDeleteAccount()">Usuń konto</button>
+    </form>
+</section>
+
+<!-- Modal -->
+<div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-labelledby="deleteAccountModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteAccountModalLabel">Usuń konto</h5>
+                <form id="deleteAccountForm" action="/blogez2/konto/" method="POST">
+                    <input type="hidden" name="action" value="deleteAccount">
+                    <button type="button" class="btn btn-danger" onclick="confirmAndDeleteAccount()">Usuń konto</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function confirmAndDeleteAccount() {
+        if (confirm('Czy na pewno chcesz usunąć swoje konto? Wszystkie twoje wpisy zostaną usunięte. (Ta akcja jest nieodwracalna)')) {
+            const form = document.getElementById('deleteAccountForm');
+            const confirmationId = Math.random().toString(36).substring(2, 15);
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'confirmation_id';
+            hiddenInput.value = confirmationId;
+            form.appendChild(hiddenInput);
+            document.getElementById('deleteAccountForm').submit();
+        }
+    }
+</script>
 
 <style>
     /* .dashboard-title {

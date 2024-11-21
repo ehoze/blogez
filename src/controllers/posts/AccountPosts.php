@@ -1,14 +1,17 @@
 <?php
 include_once __DIR__ . '/../../../config/db.php';
+include_once __DIR__ . '/../SessionController.php';
 
 class AccountPosts
 {
     private $db;
-    private const REDIRECT_PATH = '/blogez2/konto/';
+    private $session;
+    private const REDIRECT_PATH_ACCOUNT = '/blogez2/konto/';
 
     public function __construct()
     {
         $this->db = new Database(); // Zakładamy, że `Database` już tworzy połączenie PDO.
+        $this->session = new SessionController();
     }
 
     public function getPosts()
@@ -58,7 +61,7 @@ class AccountPosts
             $connection->beginTransaction();
 
             $slug = $this->generateSlug($params['title']);
-            $userId = $this->getUserId();
+            $userId = $this->session->getUserId();
 
             // Dodanie posta
             $postAdded = $this->insertPost($connection, [
@@ -67,7 +70,8 @@ class AccountPosts
                 'content' => $params['content'],
                 'seo_title' => $params['seo_title'] ?? null,
                 'seo_desc' => $params['seo_desc'] ?? null,
-                'slug' => $slug
+                'visibility' => $params['visibility'],
+                'slug' => $slug,
             ]);
 
             if ($postAdded) {
@@ -75,7 +79,7 @@ class AccountPosts
                 $this->updateUserPostsCount($connection, $userId);
                 $connection->commit();
                 $this->setSuccessMessage("Post został dodany pomyślnie!");
-                $this->redirect(self::REDIRECT_PATH);
+                $this->redirect(self::REDIRECT_PATH_ACCOUNT);
                 return true;
             }
 
@@ -92,7 +96,7 @@ class AccountPosts
     {
         if (empty($params['title']) || empty($params['content'])) {
             $this->setErrorMessage("Tytuł i treść są wymagane!");
-            $this->redirect(self::REDIRECT_PATH . 'post/');
+            $this->redirect(self::REDIRECT_PATH_ACCOUNT . 'post/create/');
             return false;
         }
         return true;
@@ -100,8 +104,16 @@ class AccountPosts
 
     private function insertPost(PDO $connection, array $data): bool
     {
-        $sql = "INSERT INTO posts (user_id, title, content, seo_title, seo_desc, slug, created_at) 
-                VALUES (:user_id, :title, :content, :seo_title, :seo_desc, :slug, NOW())";
+        $sql = "INSERT INTO posts (user_id, title, content, seo_title, seo_desc, slug, created_at, edited_at, visibility) 
+                VALUES (:user_id, :title, :content, :seo_title, :seo_desc, :slug, NOW(), NOW(), :visibility)";
+        
+        $stmt = $connection->prepare($sql);
+        return $stmt->execute($data);
+    }
+
+    private function editPostSQL(PDO $connection, array $data): bool
+    {
+        $sql = "UPDATE posts SET title = :title, content = :content, seo_title = :seo_title, seo_desc = :seo_desc, visibility = :visibility WHERE id = :id";
         
         $stmt = $connection->prepare($sql);
         return $stmt->execute($data);
@@ -127,11 +139,6 @@ class AccountPosts
         $_SESSION['edit_message_color'] = "danger";
     }
 
-    private function getUserId(): int
-    {
-        return $_SESSION['user_id'] ?? throw new Exception("Użytkownik nie jest zalogowany");
-    }
-
     private function redirect(string $path): void
     {
         header('Location: http://localhost' . $path, true, 301);
@@ -141,40 +148,50 @@ class AccountPosts
     // Edytowanie wpisu
     public function editPost($params, $id)
     {
-        $connection = $this->db->getConnection();
-
-        $sql = "UPDATE posts SET title = ?, content = ?, seo_title = ?, seo_desc = ? WHERE id = ?";
-        $stmt = $connection->prepare($sql);
 
         try {
-            $stmt->execute([
-                $params['title'],
-                $params['content'], 
-                $params['seo_title'],
-                $params['seo_desc'],
-                $id,
+            // Walidacja w osobnej metodzie
+            if (!$this->validatePostData($params)) {
+                return false;
+            }
+
+            $connection = $this->db->getConnection();
+            $connection->beginTransaction();
+
+            $postEdited = $this->editPostSQL($connection, [
+                'id' => $id,
+                'title' => $params['title'],
+                'content' => $params['content'],
+                'seo_title' => $params['seo_title'] ?? null,
+                'seo_desc' => $params['seo_desc'] ?? null,
+                'visibility' => $params['visibility']
             ]);
-            $_SESSION['edit_message'] = "Wpis został edytowany pomyślnie!";
-            $_SESSION['edit_message_color'] = "success";
-            header('Location:http://localhost/blogez2/konto/', true, 301);
-            return true;
-        } catch (PDOException $e) {
-            $_SESSION['edit_message'] = "Wystapił błąd - wpis nie został edytowany!";
-            $_SESSION['edit_message_color'] = "danger";
-            header('Location:http://localhost/blogez2/konto/', true, 301);
-            // echo "Błąd podczas dodawania wpisu: " . $e->getMessage();
+
+            if ($postEdited) {
+                $connection->commit();
+                $this->setSuccessMessage("Post został edytowany pomyślnie!");
+                $this->redirect(self::REDIRECT_PATH_ACCOUNT.'post/edit/'.$id);
+                return true;
+            }
+
+            throw new Exception("Nie udało się edytować posta");
+
+        } catch (Exception $e) {
+            $connection->rollBack();
+            $this->setErrorMessage("Błąd podczas dodawania wpisu: " . $e->getMessage());
             return false;
         }
+    }
 
+    public function checkPostOwnership($postId, $userId) {
+        $stmt = $this->db->getConnection()->prepare("SELECT id from posts WHERE id = ? AND user_id = ?");
+        $stmt->execute([$postId, $userId]);
+        return $stmt->rowCount() === 0;
     }
 
     public function deletePost($postId, $userId) {
         try {
-            $stmt = $this->db->getConnection()->prepare("SELECT id from posts WHERE id = ? AND user_id = ?");
-            $stmt->execute([$postId, $userId]);
-
-            // Sprawdzenie czy wpis istnieje i czy należy do użytkownika
-            if ($stmt->rowCount() === 0){
+            if ($this->checkPostOwnership($postId, $userId)){
                 $_SESSION['edit_message'] = "Nie masz uprawnień do usuwania tego wpisu!";
                 $_SESSION['edit_message_color'] = "danger";
                 throw new Exception("Nie masz uprawnień do usuwania tego wpisu!");
@@ -195,6 +212,10 @@ class AccountPosts
             return false;
         }
     }
+
+
+
+
 
 
 

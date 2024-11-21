@@ -58,22 +58,30 @@ $router = new Router();
 // Strona główna
 $router->addRoute('blogez2', 'HomeController@index');
 
+// Wpisy
+$router->addRoute('blogez2/wpisy', 'PostController@index');
+$router->addRoute('blogez2/wpis/{id}', 'PostController@single');
+
 // Account
 $router->addRoute('blogez2/konto', 'AccountController@index');
 $router->addRoute('blogez2/konto/register', 'AccountController@register');
 $router->addRoute('blogez2/konto/login', 'AccountController@login');
 $router->addRoute('blogez2/konto/logout', 'AccountController@logout');
 
-// Account + Posts - dodawanie wpisów
-$router->addRoute('blogez2/konto/post', 'AccountController@postcreate');
+// Zarządzanie postami
+$router->addRoute('blogez2/konto/post/create', 'AccountController@postcreate');
 $router->addRoute('blogez2/konto/post/edit/{id}', 'AccountController@postedit');
 $router->addRoute('blogez2/konto/post/delete/{id}', 'AccountController@deletepost');
-// Wpisy - dynamiczne trasy dla pojedynczego wpisu
-$router->addRoute('blogez2/wpisy', 'PostController@index');
-$router->addRoute('blogez2/wpis/{id}', 'PostController@single');
 
-// Uruchomienie routera na podstawie aktualnego adresu URL
-$router->dispatch($_SERVER['REQUEST_URI']);
+// Pobierz aktualny URL
+$currentUrl = $_SERVER['REQUEST_URI'];
+// Usuń parametry GET jeśli istnieją
+$currentUrl = strtok($currentUrl, '?');
+// Usuń początkowy i końcowy slash
+$currentUrl = trim($currentUrl, '/');
+
+// Dispatch do odpowiedniego kontrolera
+$router->dispatch($currentUrl);
 
 // Stopka strony
 require_once __DIR__ . '/src/views/inc/footer.php';

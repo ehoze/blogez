@@ -1,7 +1,12 @@
 <?php
 global $SES;
 (!$SES->IsLogged()) ? header('Location:/blogez2/konto/', true, 301) : '';
-require_once('./src/controllers/posts/PostController.php');
+
+require_once('./src/services/AuthorizationService.php');
+$authService = new AuthorizationService($SES);
+$authService->requirePostEditPermission($id);
+
+require_once('./src/controllers/PostController.php');
 require_once('./src/controllers/posts/AccountPosts.php');
 $accountPosts = new AccountPosts();
 
@@ -17,14 +22,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action'])) {
         'title' => $_POST['title'],
         'content' => $_POST['editor_content'],
         'seo_title' => $_POST['seo_title'],
-        'seo_desc' => $_POST['seo_desc']
+        'seo_desc' => $_POST['seo_desc'],
+        'visibility' => $_POST['visibility']
     ], $id);
 
     header('Location: /blogez2/konto/post/edit/' . $id);
     exit();
 }
 
-$post = new PostsController();
+$post = new PostController();
 $post = $post->getPost($id);
 ?>
 
@@ -39,32 +45,55 @@ $post = $post->getPost($id);
         <div class="col-lg-10">
             <div class="card shadow-sm">
                 <div class="card-body p-4">
-                    <h1 class="card-title mb-4 fw-bold text-primary">Edycja wpisu: <?= $post['title'] ?></h1>
+                    <h1 class="card-title mb-4 fw-bold">Edycja wpisu</h1>
 
-                    <form id="editForm" action="/blogez2/konto/post/edit/<?= $post['id'] ?>" method="POST">
-                        <div class="mb-4">
-                            <label class="form-label fw-medium" for="title">Nazwa wpisu</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-primary text-white"><i class="fas fa-heading"></i></span>
-                                <input type="text" class="form-control form-control-lg" name="title" id="title" placeholder="Wpisz tytuł..." value="<?= $post['title'] ?>">
+                    <form id="editForm" action="/blogez2/konto/post/edit/<?= $post->getId() ?>" method="POST">
+                        <ul class="nav nav-tabs mb-4" id="postTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic" type="button" role="tab" aria-controls="basic" aria-selected="true">Podstawowe</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="seo-tab" data-bs-toggle="tab" data-bs-target="#seo" type="button" role="tab" aria-controls="seo" aria-selected="false">SEO</button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content" id="postTabsContent">
+                            <div class="tab-pane fade show active" id="basic" role="tabpanel" aria-labelledby="basic-tab">
+                                <div class="mb-4">
+                                    <label class="form-label fw-medium" for="title">Nazwa wpisu</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-primary text-white"><i class="fas fa-heading"></i></span>
+                                        <input type="text" class="form-control form-control-lg" name="title" id="title" placeholder="Wpisz tytuł..." value="<?= $post->getTitle() ?>">
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label fw-medium">Treść wpisu</label>
+                                    <div id="editor" class="form-control" style="min-height: 300px;">
+                                        <?= $post->getContent() ?>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label fw-medium">Widoczność wpisu</label>
+                                    <select class="form-select" name="visibility" id="visibility">
+                                        <option value="1" <?= $post->getVisibility() == 1 ? 'selected' : '' ?>>Publiczny</option>
+                                        <option value="0" <?= $post->getVisibility() == 0 ? 'selected' : '' ?>>Prywatny</option>
+                                    </select>
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="mb-4">
-                            <label class="form-label fw-medium">Treść wpisu</label>
-                            <div id="editor" class="form-control" style="min-height: 300px;">
-                                <?= $post['content'] ?>
+                            <div class="tab-pane fade" id="seo" role="tabpanel" aria-labelledby="seo-tab">
+                                <div class="mb-4">
+                                    <label class="form-label fw-medium" for="seo_title">SEO tytuł</label>
+                                    <input type="text" class="form-control" name="seo_title" id="seo_title" value="<?= $post->getSeoTitle() ?>">
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label fw-medium" for="seo_desc">SEO opis</label>
+                                    <textarea class="form-control" name="seo_desc" id="seo_desc" rows="3"><?= $post->getSeoDesc() ?></textarea>
+                                </div>
                             </div>
-                        </div>
-
-                        <div class="mb-4">
-                            <label class="form-label fw-medium" for="seo_title">SEO tytuł</label>
-                            <input type="text" class="form-control" name="seo_title" id="seo_title" value="<?= $post['seo_title'] ?>">
-                        </div>
-
-                        <div class="mb-4">
-                            <label class="form-label fw-medium" for="seo_desc">SEO opis</label>
-                            <textarea class="form-control" name="seo_desc" id="seo_desc" rows="3"><?= $post['seo_desc'] ?></textarea>
                         </div>
 
                         <input type="hidden" name="editor_content" id="editor_content">
@@ -78,8 +107,7 @@ $post = $post->getPost($id);
                         </div>
                     </form>
 
-                    <!-- Oddzielny formularz do usuwania, ukryty -->
-                    <form id="deleteForm" action="/blogez2/konto/post/edit/<?= $post['id'] ?>" method="POST" style="display: none;">
+                    <form id="deleteForm" action="/blogez2/konto/post/edit/<?= $post->getId() ?>" method="POST" style="display: none;">
                         <input type="hidden" name="action" value="delete">
                     </form>
                 </div>

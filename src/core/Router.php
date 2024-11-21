@@ -1,38 +1,69 @@
 <?php
+require_once __DIR__ . '/../services/PostService.php';
+
+// Dodaj wszystkie kontrolery
+require_once __DIR__ . '/../controllers/HomeController.php';
+require_once __DIR__ . '/../controllers/PostController.php';
+require_once __DIR__ . '/../controllers/AccountController.php';
+
 class Router {
     private $routes = [];
 
-    // Dodaje trasę do routera
-    public function addRoute($route, $controllerAction) {
-        // Zastępuje parametry w route, np. {id} -> (\d+)
-        $routePattern = preg_replace('/\{(\w+)\}/', '(\w+)', $route);
-        $this->routes[$routePattern] = $controllerAction;
+    public function addRoute($url, $handler) {
+        $this->routes[$url] = $handler;
     }
 
-    // Przekierowanie na odpowiednią trasę na podstawie URL
     public function dispatch($url) {
-        $url = trim(parse_url($url, PHP_URL_PATH), '/');
+        // Usuń początkowy slash i trailing slash
+        $url = trim($url, '/');
+        
+        // Dodaj debugowanie
+        // echo "Cleaned URL: " . $url . "<br>";
+        // echo "Available routes: <pre>" . print_r($this->routes, true) . "</pre>";
 
-        foreach ($this->routes as $routePattern => $controllerAction) {
-            // Sprawdzenie dopasowania URL do zdefiniowanej trasy
-            if (preg_match("#^$routePattern$#", $url, $matches)) {
-                array_shift($matches); // Usunięcie pełnego dopasowania
+        // Najpierw sprawdź dokładne dopasowanie
+        if (isset($this->routes[$url])) {
+            list($controllerName, $method) = explode('@', $this->routes[$url]);
+            $this->callController($controllerName, $method);
+            return;
+        }
 
-                // Rozdzielenie na kontroler i metodę
-                list($controllerName, $method) = explode('@', $controllerAction);
+        // Jeśli nie znaleziono dokładnego dopasowania, sprawdź wzorce dynamiczne
+        foreach ($this->routes as $route => $handler) {
+            // Zamień parametry {id} na wyrażenie regularne
+            $pattern = preg_replace('/\{([a-zA-Z0-9_]+)\}/', '([^/]+)', $route);
+            $pattern = str_replace('/', '\/', $pattern);
+            
+            if (preg_match('/^' . $pattern . '$/', $url, $matches)) {
+                array_shift($matches); // Usuń pełne dopasowanie
+                list($controllerName, $method) = explode('@', $handler);
                 $this->callController($controllerName, $method, $matches);
                 return;
             }
         }
+
+        // Jeśli nie znaleziono żadnego dopasowania
+        header("HTTP/1.0 404 Not Found");
         echo "404 - Strona nie została znaleziona!";
     }
 
-    // Inicjuje kontroler i wywołuje metodę z opcjonalnymi parametrami
     private function callController($controllerName, $method, $params = []) {
         if (class_exists($controllerName)) {
             $controller = new $controllerName();
+            
+            // Inicjalizacja serwisów
+            $postService = new PostService($controller);
+            
+            // Ustawienie zmiennych dla widoku
+            global $postController, $postService;
+            $postController = $controller;
+            
             if (method_exists($controller, $method)) {
-                call_user_func_array([$controller, $method], $params);
+                if (!empty($params)) {
+                    $controller->$method(...$params);
+                } else {
+                    $controller->$method();
+                }
             } else {
                 echo "Błąd: Metoda $method nie istnieje w kontrolerze $controllerName.";
             }
@@ -41,48 +72,3 @@ class Router {
         }
     }
 }
-
-
-
-
-
-
-
-
-
-// class Router {
-//     private $routes = [];
-
-//     // Dodaje trasę do routera
-//     public function addRoute($route, $controllerAction) {
-//         $this->routes[$route] = $controllerAction;
-//     }
-
-//     // Przekierowanie na odpowiednią trasę na podstawie URL
-//     public function dispatch($url) {
-//         // Usuwamy prefiksy i dodatkowe znaki
-//         $url = trim(parse_url($url, PHP_URL_PATH), '/');
-
-//         if (array_key_exists($url, $this->routes)) {
-//             list($controllerName, $method) = explode('@', $this->routes[$url]);
-//             $this->callController($controllerName, $method);
-//         } else {
-//             echo "404 - Strona nie została znaleziona!";
-//         }
-//     }
-
-//     // Inicjuje kontroler i wywołuje metodę
-//     private function callController($controllerName, $method) {
-//         if (class_exists($controllerName)) {
-//             $controller = new $controllerName();
-//             if (method_exists($controller, $method)) {
-//                 $controller->$method();
-//             } else {
-//                 echo "Błąd: Metoda $method nie istnieje w kontrolerze $controllerName.";
-//             }
-//         } else {
-//             echo "Błąd: Kontroler $controllerName nie został znaleziony.";
-//         }
-//     }
-// }
-?>

@@ -51,8 +51,12 @@ class Login
 
                     header('Location:http://localhost/blogez2/konto/', true, 301);
                     return true;
+                } else {
+                    $_SESSION['login_message'] = 'Niepoprawne dane logowania.';
+                    header('Location:http://localhost/blogez2/konto/login/', true, 301);
+                    return false;
                 }
-            }else{
+            } else {
                 $_SESSION['login_message'] = 'Niepoprawne dane logowania.';
                 header('Location:http://localhost/blogez2/konto/login/', true, 301);
                 return false;

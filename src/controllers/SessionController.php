@@ -41,5 +41,11 @@ class SessionController {
             return $this->session['posts_left'];
         }
     }
+
+    public function SessionDestroy(){
+        unset($_SESSION);
+        session_destroy();
+        session_write_close();
+    }
 }
 

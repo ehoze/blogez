@@ -1,14 +1,15 @@
 <?php
+require_once './src/controllers/SessionController.php';
 class Logout
 {
-    public function __construct() {}
+    private $sessionController;
+    public function __construct() {
+        $this->sessionController = new SessionController();
+    }
 
     public function logout()
     {
-        session_start();
-        unset($_SESSION);
-        session_destroy();
-        session_write_close();
+        $this->sessionController->SessionDestroy();
         header('Location: /blogez2/');
         die;
     }

@@ -36,7 +36,7 @@
               </a>
               <ul class="dropdown-menu">
                 <li><a class="dropdown-item" href="/blogez2/konto/">Konto</a></li>
-                <li><a class="dropdown-item" href="/blogez2/konto/post/">Dodaj wpis</a></li>
+                <li><a class="dropdown-item" href="/blogez2/konto/post/create">Dodaj wpis</a></li>
               </ul>
             </li>
             <li><a class="nav-link" href="/blogez2/konto/logout">Wyloguj się</a></li>

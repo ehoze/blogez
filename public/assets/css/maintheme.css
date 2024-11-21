@@ -295,6 +295,9 @@ body {
     box-shadow: 0 5px 15px rgba(0,0,0,0.05);
 }
 
+.ck-editor__editable {
+    min-height: 500px;
+}
 
 
 

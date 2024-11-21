@@ -1,19 +1,20 @@
 <?php
-require_once("./src/controllers/posts/PostController.php");
-$Post = new PostsController();
-$post = $Post->getPost($id); // Przypisanie danych posta do zmiennej $post
+require_once("./src/controllers/PostController.php");
+$postController = new PostController();
+$post = $postController->getPost($id);
 ?>
 
 <div class="container py-5">
     <div class="article-container">
         <div class="article-header">
-            <h1 class="article-title"><?= $post['title'] ?></h1>
+            <h1 class="article-title"><?= $post->getTitle() ?></h1>
             <div class="article-meta">
-                <span class="post-date"><?= date('d M Y', strtotime($post['created_at'])) ?></span>
+                <span class="post-date"><?= date('d M Y', strtotime($post->getCreatedAt())) ?></span>
+                <span class="post-author">Autorstwa: <?= $post->getAuthorName($id) ?></span>
             </div>
         </div>
         <div class="article-content">
-            <?= $post['content'] ?>
+            <?= $post->getContent() ?>
         </div>
     </div>
 </div>
